@@ -29,3 +29,25 @@ class Order:
 if __name__ == "__main__":
     order = Order("ORD001", "BUY", 100.50, 10)
     print(order)
+
+# Test 1: Valid order
+order1 = Order("ORD002", "BUY", 100.5, 10)
+print("Test 1 - Valid order:", order1)
+
+# Test 2: Invalid side
+try:
+    Order("ORD003", "HOLD", 100.5, 10)
+except ValueError as e:
+    print("Test 2 - Passed:", e)
+
+# Test 3: Invalid price
+try:
+    Order("ORD004", "BUY", -10, 10)
+except ValueError as e:
+    print("Test 3 - Passed:", e)
+
+# Test 4: Invalid quantity
+try:
+    Order("ORD005", "SELL", 100, 0)
+except ValueError as e:
+    print("Test 4 - Passed:", e)
