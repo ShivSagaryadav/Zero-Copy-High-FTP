@@ -4,14 +4,25 @@ from datetime import datetime
 
 class Order:
     def __init__(self, order_id, side, price, quantity):
+        if not isinstance(order_id, str) or not order_id.strip():
+            raise ValueError("Order ID must not be empty")
+
         if side not in ("BUY", "SELL"):
             raise ValueError("Side must be BUY or SELL")
 
-        if price <= 0:
-            raise ValueError("Price must be positive")
+        if (
+            isinstance(price, bool)
+            or not isinstance(price, (int, float))
+            or price <= 0
+        ):
+            raise ValueError("Price must be a positive number")
 
-        if quantity <= 0:
-            raise ValueError("Quantity must be positive")
+        if (
+            isinstance(quantity, bool)
+            or not isinstance(quantity, int)
+            or quantity <= 0
+        ):
+            raise ValueError("Quantity must be a positive integer")
 
         self.order_id = order_id
         self.side = side
@@ -26,28 +37,7 @@ class Order:
         )
 
 
+
 if __name__ == "__main__":
     order = Order("ORD001", "BUY", 100.50, 10)
     print(order)
-
-# Test 1: Valid order
-order1 = Order("ORD002", "BUY", 100.5, 10)
-print("Test 1 - Valid order:", order1)
-
-# Test 2: Invalid side
-try:
-    Order("ORD003", "HOLD", 100.5, 10)
-except ValueError as e:
-    print("Test 2 - Passed:", e)
-
-# Test 3: Invalid price
-try:
-    Order("ORD004", "BUY", -10, 10)
-except ValueError as e:
-    print("Test 3 - Passed:", e)
-
-# Test 4: Invalid quantity
-try:
-    Order("ORD005", "SELL", 100, 0)
-except ValueError as e:
-    print("Test 4 - Passed:", e)
