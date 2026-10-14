@@ -1,7 +1,7 @@
 
 import mmap
 import struct
-
+import math
 
 class RingBuffer:
     """Fixed-capacity ring buffer backed by memory-mapped storage."""
@@ -30,8 +30,13 @@ class RingBuffer:
         if not isinstance(order_id, int) or isinstance(order_id, bool) or not 0 <= order_id < 2**64:
             raise ValueError("Order ID must be an unsigned 64-bit integer")
 
-        if not isinstance(price, (int, float)) or isinstance(price, bool) or price <= 0:
-            raise ValueError("Price must be positive")
+        if (
+    not isinstance(price, (int, float))
+    or isinstance(price, bool)
+    or not math.isfinite(price)
+    or price <= 0
+        ):
+         raise ValueError("Price must be a finite positive number")
 
         if not isinstance(quantity, int) or isinstance(quantity, bool) or quantity <= 0:
             raise ValueError("Quantity must be a positive integer")

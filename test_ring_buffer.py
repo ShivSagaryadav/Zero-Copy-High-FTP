@@ -1,4 +1,4 @@
-
+import math
 import unittest
 
 from ring_buffer import RingBuffer
@@ -57,6 +57,12 @@ class TestRingBuffer(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.buffer.write_order(1, 100.0, 0)
 
+    def test_nan_price(self):
+        with self.assertRaises(ValueError):
+            self.buffer.write_order(1, math.nan, 5)
 
+    def test_infinite_price(self):
+        with self.assertRaises(ValueError):
+            self.buffer.write_order(1, math.inf, 5)
 if __name__ == "__main__":
     unittest.main()
