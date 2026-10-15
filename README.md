@@ -1,31 +1,71 @@
 Zero-Copy-High-FTP
 
-ChronosMatch — High-Performance Order Matching Engine
-ChronosMatch is a Python-based high-frequency trading order-matching engine designed to match buy and sell orders efficiently using price-time priority. The project explores zero-copy techniques, including memoryview, shared memory, and ring buffers, to reduce data-copying overhead and improve performance.
+# ChronosMatch - High-Performance Order Matching Engine
 
-Project Objectives
-1.Implement an order book for buy and sell orders.
-2.Match orders using price-time priority.
-3.Explore zero-copy data handling techniques.
-4.Measure latency and throughput.
-5.Compare the optimized implementation with a basic baseline.
+ChronosMatch is a Python-based project for developing an order-matching engine for high-frequency trading. It aims to explore efficient order handling, price-time priority matching, memory-mapped ring buffers, and performance benchmarking.
 
-Project Modules
-1.Order Management: Create, validate, and manage orders.
-2.Matching Engine: Implement order-book operations and price-time priority matching.
-3.Zero-Copy Optimization: Explore memoryview, shared memory, and ring buffers.
-4.Testing and Benchmarking: Test correctness and compare performance.
+## Project Objectives
 
-Technology Stack
-1.Python
-2.Git and GitHub
-3.Python testing tools
-4.Shared memory and memoryview
-5.Performance benchmarking tools
+1. Implement an order book for buy and sell orders.
+2. Match orders using price-time priority.
+3. Explore efficient data handling using memory-mapped storage and other zero-copy techniques.
+4. Measure latency and throughput.
+5. Compare the basic implementation with optimized versions.
 
-Project Status
-Currently under development.
+## Project Modules
 
-Expected Outcome
+- **Order Management:** Create and validate orders.
+- **Matching Engine:** Implement order-book operations and price-time priority matching.
+- **Zero-Copy Optimization:** Explore memory-mapped ring buffers and other data-handling techniques.
+- **Testing and Benchmarking:** Verify correctness and measure performance.
 
-A modular order-matching engine with tested matching logic and benchmark results comparing the basic and optimized implementations.
+## Technology Stack
+
+- Python
+- `mmap` and `struct`
+- Git and GitHub
+- Python `unittest`
+
+## Current Implementation
+
+- Order creation and input validation in `orders.py`.
+- Memory-mapped ring buffer implementation in `ring_buffer.py`.
+- Automated order tests in `test_orders.py`.
+- Automated ring buffer tests in `test_ring_buffer.py`.
+
+The project is under development. Cross-process communication, matching-engine integration, and performance targets must be verified separately as implementation progresses.
+
+## Setup
+
+Use Python 3.10 or later.
+
+Clone the repository and open its project directory:
+
+```bash
+git clone https://github.com/ShivSagaryadav/Zero-Copy-High-FTP.git
+cd Zero-Copy-High-FTP
+```
+
+## Run the Tests
+
+Run all automated tests:
+
+```bash
+python -m unittest -v
+```
+
+Run order validation tests only:
+
+```bash
+python -m unittest -v test_orders.py
+```
+
+Run ring buffer tests only:
+
+```bash
+python -m unittest -v test_ring_buffer.py
+```
+
+## Expected Outcome
+
+A modular order-matching engine with verified matching logic and benchmark results comparing the basic and optimized implementations.
