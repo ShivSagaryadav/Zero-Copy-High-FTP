@@ -26,20 +26,31 @@ class RingBuffer:
     def write_order(self, order_id, price, quantity):
         if self.count == self.capacity:
             raise BufferError("Ring buffer is full")
-
-        if not isinstance(order_id, int) or isinstance(order_id, bool) or not 0 <= order_id < 2**64:
-            raise ValueError("Order ID must be an unsigned 64-bit integer")
+        if (
+            not isinstance(order_id, int)
+            or isinstance(order_id, bool)
+            or not 0 <= order_id < 2**64
+        ):
+            raise ValueError(
+                "Order ID must be an unsigned 64-bit integer"
+            )
 
         if (
-    not isinstance(price, (int, float))
-    or isinstance(price, bool)
-    or not math.isfinite(price)
-    or price <= 0
+            not isinstance(quantity, int)
+            or isinstance(quantity, bool)
+            or quantity <= 0
+            or quantity > 2**32 - 1
         ):
-         raise ValueError("Price must be a finite positive number")
-
-        if not isinstance(quantity, int) or isinstance(quantity, bool) or quantity <= 0:
-            raise ValueError("Quantity must be a positive integer")
+            raise ValueError(
+                "Quantity must be a positive 32-bit integer"
+            )
+        if (
+            isinstance(price, bool)
+            or not isinstance(price, (int, float))
+            or not math.isfinite(price)
+            or price <= 0
+        ):
+            raise ValueError("Price must be a finite positive number")
 
         record = struct.pack(
             self.RECORD_FORMAT,

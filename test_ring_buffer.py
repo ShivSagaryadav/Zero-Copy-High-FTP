@@ -45,9 +45,16 @@ class TestRingBuffer(unittest.TestCase):
         self.assertEqual(self.buffer.read_order(), (2, 101.0, 6))
         self.assertEqual(self.buffer.read_order(), (3, 102.0, 7))
 
+
     def test_invalid_order_id(self):
         with self.assertRaises(ValueError):
             self.buffer.write_order(-1, 100.0, 5)
+
+    def test_quantity_exceeds_uint32_limit(self):
+        with self.assertRaisesRegex(
+            ValueError, "Quantity must be a positive 32-bit integer"
+        ):
+            self.buffer.write_order(1, 100.0, 2**32)
 
     def test_invalid_price(self):
         with self.assertRaises(ValueError):
