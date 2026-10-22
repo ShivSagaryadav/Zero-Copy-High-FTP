@@ -36,6 +36,7 @@ async def generate_orders(buffer, total_orders):
     print(f"Elapsed time: {elapsed:.4f} seconds")
     print(f"Generation rate: {rate:.0f} orders/second")
     print("Note: BUY/SELL side is generated but is not stored in the current buffer.")
+    print("Metric: producer generation/write-loop rate, not end-to-end matching throughput.")
 
 
 async def consume_orders(buffer, total_orders):
