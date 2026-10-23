@@ -71,5 +71,19 @@ class TestRingBuffer(unittest.TestCase):
     def test_infinite_price(self):
         with self.assertRaises(ValueError):
             self.buffer.write_order(1, math.inf, 5)
+            
+    def test_read_after_close(self):
+        self.buffer.close()
+        with self.assertRaisesRegex(ValueError, "Ring buffer is closed"):
+            self.buffer.read_order()
+
+    def test_write_after_close(self):
+        self.buffer.close()
+        with self.assertRaisesRegex(ValueError, "Ring buffer is closed"):
+            self.buffer.write_order(1, 100.0, 5)
+
+    def test_close_twice(self):
+        self.buffer.close()
+        self.buffer.close()
 if __name__ == "__main__":
     unittest.main()

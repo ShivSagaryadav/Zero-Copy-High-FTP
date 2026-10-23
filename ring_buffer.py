@@ -22,8 +22,12 @@ class RingBuffer:
             -1,
             capacity * self.RECORD_SIZE,
         )
+        self.closed = False
 
     def write_order(self, order_id, price, quantity):
+        if self.closed:
+            raise ValueError("Ring buffer is closed")
+        
         if self.count == self.capacity:
             raise BufferError("Ring buffer is full")
         if (
@@ -66,6 +70,9 @@ class RingBuffer:
         self.count += 1
 
     def read_order(self):
+        if self.closed:
+            raise ValueError("Ring buffer is closed")
+        
         if self.count == 0:
             raise BufferError("Ring buffer is empty")
 
@@ -79,4 +86,6 @@ class RingBuffer:
         return order
 
     def close(self):
-        self.memory.close()
+        if not self.closed:
+            self.memory.close()
+            self.closed = True
