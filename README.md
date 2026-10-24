@@ -69,3 +69,8 @@ python -m unittest -v test_ring_buffer.py
 ## Expected Outcome
 
 A modular order-matching engine with verified matching logic and benchmark results comparing the basic and optimized implementations.
+
+## Asynchronous Order Simulator
+
+Run the simulator using `python async_simulator.py`. It asynchronously generates and consumes 10,000 mock orders using the memory-mapped ring buffer. The reported generation rate measures the producer generation/write-loop, not end-to-end matching-engine throughput. The current ring buffer stores order ID, price, and quantity, but not BUY/SELL side.
+
