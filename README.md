@@ -13,14 +13,14 @@ Project Objectives
 Project Modules
 1.Order Management: Create, validate, and manage orders.
 2.Matching Engine: Implement order-book operations and price-time priority matching.
-3.Zero-Copy Optimization: Explore memoryview, shared memory, and ring buffers.
+3.Zero-Copy Optimization: Explore memory view, shared memory, and ring buffers.
 4.Testing and Benchmarking: Test correctness and compare performance.
 
 Technology Stack
 1.Python
 2.Git and GitHub
 3.Python testing tools
-4.Shared memory and memoryview
+4.Shared memory and memory view
 5.Performance benchmarking tools
 
 Project Status
@@ -29,3 +29,4 @@ Currently under development.
 Expected Outcome
 
 A modular order-matching engine with tested matching logic and benchmark results comparing the basic and optimized implementations.
+
