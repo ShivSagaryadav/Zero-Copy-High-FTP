@@ -35,6 +35,8 @@ class MatchingEngine:
         Trades execute at the resting order's price."""
         new_trades: List[Trade] = []
         book = self.book
+        if book.get(order.id) is not None:
+            raise ValueError(f"Duplicate order id {order.id}")
         while order.remaining > 0:
             if order.side is Side.BUY:
                 resting = book.best_ask()
