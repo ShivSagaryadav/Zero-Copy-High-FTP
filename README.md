@@ -30,3 +30,19 @@ Expected Outcome
 
 A modular order-matching engine with tested matching logic and benchmark results comparing the basic and optimized implementations.
 
+## Run
+
+From the repository root:
+
+```powershell
+python -m pytest
+python -m chronosmatch
+```
+
+The matching-engine copy can also be run independently:
+
+```powershell
+Set-Location matching-engine
+python -m pytest
+python -m chronosmatch
+```
