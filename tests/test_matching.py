@@ -6,6 +6,7 @@ def test_exact_match():
     e.submit(Order("S", "SELL", 100.5, 10))
     t = e.submit(Order("B", "BUY", 100.5, 10))
     assert len(t) == 1 and t[0].quantity == 10 and t[0].value == 1005.0
+    assert 0 <= t[0].latency_ns <= t[0].end_to_end_latency_ns
     assert len(e.book) == 0
 
 

@@ -1,6 +1,7 @@
 """Component A - Order management: the Order class and its validation."""
 from __future__ import annotations
 
+import math
 import time
 from dataclasses import dataclass, field
 from enum import Enum
@@ -23,6 +24,7 @@ class Order:
     quantity: int
     timestamp: float = field(default_factory=time.time)
     remaining: int = field(init=False)
+    created_ns: int = field(default_factory=time.perf_counter_ns, init=False)
 
     def __post_init__(self) -> None:
         if not isinstance(self.id, str) or not self.id.strip():
@@ -32,9 +34,17 @@ class Order:
             self.side = Side(raw.upper())
         except ValueError:
             raise OrderValidationError("Side must be BUY or SELL") from None
-        if isinstance(self.price, bool) or not isinstance(self.price, (int, float)) \
-                or self.price <= 0:
-            raise OrderValidationError("Price must be positive")
+        try:
+            price_is_finite = math.isfinite(self.price)
+        except (OverflowError, TypeError):
+            price_is_finite = False
+        if (
+            isinstance(self.price, bool)
+            or not isinstance(self.price, (int, float))
+            or not price_is_finite
+            or self.price <= 0
+        ):
+            raise OrderValidationError("Price must be positive and finite")
         if isinstance(self.quantity, bool) or not isinstance(self.quantity, int) \
                 or self.quantity <= 0:
             raise OrderValidationError("Quantity must be a positive integer")
