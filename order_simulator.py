@@ -14,8 +14,14 @@ class MockOrder:
     created_ns: int
 
 
+def _validate_count(count: int) -> None:
+    if isinstance(count, bool) or not isinstance(count, int) or count < 0:
+        raise ValueError("count must be a non-negative integer")
+
+
 async def generate_orders(count: int, seed: int = 42):
     """Generate repeatable mock BUY and SELL orders."""
+    _validate_count(count)
     rng = random.Random(seed)
 
     for order_id in range(1, count + 1):
@@ -35,6 +41,7 @@ async def generate_orders(count: int, seed: int = 42):
 
 async def run_simulation(count: int = 10_000, seed: int = 42):
     """Generate orders and measure their passage through a queue."""
+    _validate_count(count)
     queue = asyncio.Queue(maxsize=1000)
     latencies_ns = []
     consumed = 0
