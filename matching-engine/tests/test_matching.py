@@ -65,6 +65,24 @@ def test_cancel():
     assert e.submit(Order("B", "BUY", 100, 5)) == []
 
 
+def test_duplicate_id_rejected_before_matching():
+    e = MatchingEngine()
+    resting = Order("DUP", "SELL", 100, 5)
+    incoming = Order("DUP", "BUY", 100, 5)
+    e.submit(resting)
+
+    try:
+        e.submit(incoming)
+        assert False, "Expected duplicate order ID to be rejected"
+    except ValueError as exc:
+        assert str(exc) == "Duplicate order id DUP"
+
+    assert e.trades == []
+    assert e.book.get("DUP") is resting
+    assert resting.remaining == 5
+    assert incoming.remaining == 5
+
+
 def test_conservation_of_quantity():
     import random
     random.seed(7)
