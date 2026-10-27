@@ -22,11 +22,13 @@ cpdef tuple match_orders(
         raise MemoryError()
 
     try:
+        for index in range(count):
+            fills[index] = 0
+
         with nogil:
             for index in range(count):
-                fills[index] = 0
                 if remaining <= 0:
-                    continue
+                    break
                 if incoming_is_buy:
                     if resting_prices[index] > incoming_price:
                         break
