@@ -51,11 +51,19 @@ class RingBuffer:
         if (
             isinstance(price, bool)
             or not isinstance(price, (int, float))
-            or not math.isfinite(price)
             or price <= 0
         ):
             raise ValueError("Price must be a finite positive number")
 
+        try:
+            price = float(price)
+        except OverflowError:
+            raise ValueError(
+                "Price must be a finite positive number"
+            ) from None
+
+        if not math.isfinite(price):
+            raise ValueError("Price must be a finite positive number")
         record = struct.pack(
             self.RECORD_FORMAT,
             order_id,

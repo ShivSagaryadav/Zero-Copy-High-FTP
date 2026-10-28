@@ -72,6 +72,10 @@ class TestRingBuffer(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.buffer.write_order(1, math.inf, 5)
             
+    def test_extremely_large_integer_price(self):
+        with self.assertRaises(ValueError):
+            self.buffer.write_order(1, 10**1000, 5)
+
     def test_read_after_close(self):
         self.buffer.close()
         with self.assertRaisesRegex(ValueError, "Ring buffer is closed"):
