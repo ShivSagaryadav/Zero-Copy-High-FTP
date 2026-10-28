@@ -6,7 +6,14 @@ from chronosmatch import _cython_matcher
 
 
 @pytest.mark.parametrize(
-    ("incoming_price", "incoming_quantity", "incoming_is_buy", "prices", "quantities", "expected"),
+    (
+        "incoming_price",
+        "incoming_quantity",
+        "incoming_is_buy",
+        "prices",
+        "quantities",
+        "expected",
+    ),
     [
         (100.0, 5, True, [99.0, 101.0, 98.0], [2, 7, 3], ([2, 0, 0], 3)),
         (100.0, 5, False, [101.0, 99.0, 102.0], [2, 7, 3], ([2, 0, 0], 3)),

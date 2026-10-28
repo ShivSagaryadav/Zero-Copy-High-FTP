@@ -13,7 +13,7 @@
         "requirements-cython.txt"
       ],
       "options": {
-        "cwd": "${workspaceFolder}\\matching-engine"
+        "cwd": "${workspaceFolder}"
       },
       "problemMatcher": []
     },
@@ -27,7 +27,7 @@
         "--inplace"
       ],
       "options": {
-        "cwd": "${workspaceFolder}\\matching-engine"
+        "cwd": "${workspaceFolder}"
       },
       "group": "build",
       "problemMatcher": []
