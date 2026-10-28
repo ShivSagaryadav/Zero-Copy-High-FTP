@@ -1,1 +1,7 @@
 __pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+build/
+*.pyd
+*.so

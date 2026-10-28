@@ -1,0 +1,45 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "ChronosMatch: Install Cython build dependencies",
+      "type": "process",
+      "command": "${command:python.interpreterPath}",
+      "args": [
+        "-m",
+        "pip",
+        "install",
+        "-r",
+        "requirements-cython.txt"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "ChronosMatch: Build native Cython extension",
+      "type": "process",
+      "command": "${command:python.interpreterPath}",
+      "args": [
+        "setup_cython.py",
+        "build_ext",
+        "--inplace"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "ChronosMatch: Install and build native extension",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "ChronosMatch: Install Cython build dependencies",
+        "ChronosMatch: Build native Cython extension"
+      ],
+      "problemMatcher": []
+    }
+  ]
+}
