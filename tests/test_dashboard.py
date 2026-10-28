@@ -1,4 +1,7 @@
+import pytest
+
 from chronosmatch.dashboard import DashboardState, render_dashboard
+from chronosmatch.dashboard import run_curses_dashboard
 from chronosmatch.matching_engine import Trade
 
 
@@ -19,3 +22,18 @@ def test_dashboard_formats_book_metrics_and_highlights_whale_trade():
     assert len(trade_lines) == 1
     assert "WHALE" in trade_lines[0]
     assert any("Spread: 0.5" in line for line, _ in lines)
+
+
+@pytest.mark.parametrize("threshold", [0, -1, 1.5, True])
+def test_dashboard_rejects_invalid_whale_threshold(threshold):
+    with pytest.raises(ValueError, match="whale_threshold"):
+        render_dashboard(DashboardState([], [], None, 0, 0, 0, []), threshold)
+
+
+@pytest.mark.parametrize("refresh_seconds", [0, -0.1, float("nan"), float("inf"), True])
+def test_dashboard_rejects_invalid_refresh_interval_before_starting_curses(
+    refresh_seconds,
+):
+    with pytest.raises(ValueError, match="refresh_seconds"):
+        run_curses_dashboard(lambda: DashboardState([], [], None, 0, 0, 0, []),
+                             refresh_seconds=refresh_seconds)
