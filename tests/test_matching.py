@@ -6,6 +6,7 @@ def test_exact_match():
     e.submit(Order("S", "SELL", 100.5, 10))
     t = e.submit(Order("B", "BUY", 100.5, 10))
     assert len(t) == 1 and t[0].quantity == 10 and t[0].value == 1005.0
+    assert 0 <= t[0].latency_ns <= t[0].end_to_end_latency_ns
     assert len(e.book) == 0
 
 
@@ -63,6 +64,24 @@ def test_cancel():
     e.submit(Order("S", "SELL", 100, 5))
     assert e.cancel("S") is True
     assert e.submit(Order("B", "BUY", 100, 5)) == []
+
+
+def test_duplicate_id_rejected_before_matching():
+    e = MatchingEngine()
+    resting = Order("DUP", "SELL", 100, 5)
+    incoming = Order("DUP", "BUY", 100, 5)
+    e.submit(resting)
+
+    try:
+        e.submit(incoming)
+        assert False, "Expected duplicate order ID to be rejected"
+    except ValueError as exc:
+        assert str(exc) == "Duplicate order id DUP"
+
+    assert e.trades == []
+    assert e.book.get("DUP") is resting
+    assert resting.remaining == 5
+    assert incoming.remaining == 5
 
 
 def test_conservation_of_quantity():

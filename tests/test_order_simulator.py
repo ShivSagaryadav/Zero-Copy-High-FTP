@@ -52,6 +52,22 @@ class TestOrderSimulator(unittest.IsolatedAsyncioTestCase):
             result["throughput_orders_per_second"], 0
         )
 
+    async def test_simulation_rejects_invalid_counts(self):
+        for count in (-1, 1.5, True):
+            with self.subTest(count=count):
+                with self.assertRaisesRegex(
+                    ValueError, "count must be a non-negative integer"
+                ):
+                    await run_simulation(count=count)
+
+    async def test_order_generator_rejects_invalid_counts(self):
+        for count in (-1, 1.5, True):
+            with self.subTest(count=count):
+                with self.assertRaisesRegex(
+                    ValueError, "count must be a non-negative integer"
+                ):
+                    _ = [order async for order in generate_orders(count)]
+
 
 if __name__ == "__main__":
     unittest.main()
