@@ -21,6 +21,7 @@ class Trade:
     timestamp: float
     latency_ns: int = 0
     end_to_end_latency_ns: int = 0
+    aggressor_order_quantity: int = 0
 
     @property
     def value(self) -> float:
@@ -83,6 +84,7 @@ class MatchingEngine:
                     time.time(),
                     engine_latency_ns,
                     end_to_end_latency_ns,
+                    order.quantity,
                 )
             )
         self.trades.extend(new_trades)

@@ -94,5 +94,7 @@ Install the terminal dashboard dependency with
 python -m chronosmatch pipeline --count 10000 --dashboard
 ```
 
-Press `q` to close the dashboard. Large trades are highlighted using the
-default quantity threshold of 1,000; change it with `--whale-threshold`.
+Press `q` to close the dashboard. Incoming orders at or above the default
+quantity threshold of 1,000 are highlighted, including orders split into
+multiple fills across price levels. Change the threshold with
+`--whale-threshold`.
