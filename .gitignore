@@ -1,1 +1,10 @@
 __pycache__/
+
+# Python build artifacts
+build/
+dist/
+*.egg-info/
+
+# Compiled Python extensions
+*.pyd
+*.so
