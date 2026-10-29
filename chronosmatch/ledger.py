@@ -99,10 +99,21 @@ class AsyncTradeLedger:
                     timestamp REAL NOT NULL,
                     latency_ns INTEGER NOT NULL,
                     end_to_end_latency_ns INTEGER NOT NULL,
+                    aggressor_order_quantity INTEGER NOT NULL,
                     PRIMARY KEY (run_id, trade_id)
                 )
                 """
             )
+            columns = {
+                row[1] for row in connection.execute("PRAGMA table_info(trades)")
+            }
+            if "aggressor_order_quantity" not in columns:
+                connection.execute(
+                    """
+                    ALTER TABLE trades
+                    ADD COLUMN aggressor_order_quantity INTEGER NOT NULL DEFAULT 0
+                    """
+                )
 
     def _insert_batch(self, batch: list[Trade]) -> None:
         rows = [
@@ -117,6 +128,7 @@ class AsyncTradeLedger:
                 trade.timestamp,
                 trade.latency_ns,
                 trade.end_to_end_latency_ns,
+                trade.aggressor_order_quantity,
             )
             for trade in batch
         ]
@@ -126,8 +138,8 @@ class AsyncTradeLedger:
                 INSERT INTO trades (
                     run_id, trade_id, buy_order_id, sell_order_id,
                     price, quantity, value, timestamp, latency_ns,
-                    end_to_end_latency_ns
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    end_to_end_latency_ns, aggressor_order_quantity
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 rows,
             )

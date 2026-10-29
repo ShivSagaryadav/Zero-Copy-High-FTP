@@ -55,12 +55,14 @@ def render_dashboard(
     lines.extend((f"  {price:.4f}  {quantity}", False) for price, quantity in state.asks)
     lines.extend([("", False), ("Recent trades", False)])
     for trade in state.recent_trades[-5:]:
-        is_whale = trade.quantity >= whale_threshold
+        order_quantity = trade.aggressor_order_quantity or trade.quantity
+        is_whale = order_quantity >= whale_threshold
         label = " WHALE" if is_whale else ""
         lines.append(
             (
                 f"  #{trade.trade_id} {trade.buy_order_id}/{trade.sell_order_id} "
-                f"{trade.quantity} @ {trade.price:.4f}{label}",
+                f"{trade.quantity} @ {trade.price:.4f}"
+                f"{f' (order {order_quantity})' if is_whale else ''}{label}",
                 is_whale,
             )
         )
