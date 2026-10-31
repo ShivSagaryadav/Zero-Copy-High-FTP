@@ -84,6 +84,28 @@ def test_duplicate_id_rejected_before_matching():
     assert incoming.remaining == 5
 
 
+def test_order_id_cannot_be_reused_after_fill_or_cancel():
+    e = MatchingEngine()
+    e.submit(Order("FILLED", "SELL", 100, 1))
+    e.submit(Order("BUY", "BUY", 100, 1))
+    e.submit(Order("CANCELLED", "BUY", 99, 1))
+    assert e.cancel("CANCELLED")
+
+    for duplicate in (
+        Order("FILLED", "BUY", 99, 1),
+        Order("CANCELLED", "SELL", 101, 1),
+    ):
+        try:
+            e.submit(duplicate)
+            assert False, "Expected historical order ID reuse to be rejected"
+        except ValueError as exc:
+            assert str(exc) == f"Duplicate order id {duplicate.id}"
+        assert duplicate.remaining == duplicate.quantity
+
+    assert len(e.book) == 0
+    assert len(e.trades) == 1
+
+
 def test_conservation_of_quantity():
     import random
     random.seed(7)
