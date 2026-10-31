@@ -33,14 +33,16 @@ class MatchingEngine:
         self.book = OrderBook()
         self.trades: List[Trade] = []
         self._ids = itertools.count(1)
+        self._seen_order_ids: set[str] = set()
         self.matcher_backend = _matcher.BACKEND
 
     def submit(self, order: Order) -> List[Trade]:
         """Match the incoming order against the book; any rest goes on the book.
         Trades execute at the resting order's price."""
         book = self.book
-        if book.get(order.id) is not None:
+        if order.id in self._seen_order_ids:
             raise ValueError(f"Duplicate order id {order.id}")
+        self._seen_order_ids.add(order.id)
         engine_started_ns = time.perf_counter_ns()
         matched_orders: list[tuple[Order, int]] = []
         while order.remaining > 0:
