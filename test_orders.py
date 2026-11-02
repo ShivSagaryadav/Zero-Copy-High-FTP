@@ -1,4 +1,4 @@
-
+import math
 import unittest
 from orders import Order
 
@@ -38,6 +38,18 @@ class TestOrder(unittest.TestCase):
     def test_decimal_quantity(self):
         with self.assertRaises(ValueError):
             Order("ORD007", "BUY", 100.5, 2.5)
+
+    def test_nan_price(self):
+        with self.assertRaises(ValueError):
+            Order("ORD008", "BUY", math.nan, 10)
+
+    def test_infinite_price(self):
+        with self.assertRaises(ValueError):
+            Order("ORD009", "BUY", math.inf, 10)
+
+    def test_negative_infinite_price(self):
+        with self.assertRaises(ValueError):
+            Order("ORD010", "BUY", -math.inf, 10)
 
 
 if __name__ == "__main__":

@@ -1,5 +1,6 @@
 
 from datetime import datetime
+import math
 
 
 class Order:
@@ -13,10 +14,11 @@ class Order:
         if (
             isinstance(price, bool)
             or not isinstance(price, (int, float))
+            or not math.isfinite(price)
             or price <= 0
         ):
-            raise ValueError("Price must be a positive number")
-
+            raise ValueError("Price must be a finite positive number")
+        
         if (
             isinstance(quantity, bool)
             or not isinstance(quantity, int)
