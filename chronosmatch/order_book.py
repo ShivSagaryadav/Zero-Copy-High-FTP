@@ -64,6 +64,9 @@ class OrderBook:
         return len(self._live)
 
     def snapshot(self, depth: int = 5) -> dict:
+        if isinstance(depth, bool) or not isinstance(depth, int) or depth < 0:
+            raise ValueError("depth must be a non-negative integer")
+
         def agg(heap, reverse):
             levels: dict[float, int] = {}
             for _, _, o in heap:

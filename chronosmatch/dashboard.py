@@ -1,11 +1,21 @@
 """Curses terminal dashboard with a separately testable text renderer."""
 from __future__ import annotations
 
+import math
 import time
 from dataclasses import dataclass
 from typing import Callable
 
 from .matching_engine import Trade
+
+
+def _validate_whale_threshold(whale_threshold: int) -> None:
+    if (
+        isinstance(whale_threshold, bool)
+        or not isinstance(whale_threshold, int)
+        or whale_threshold <= 0
+    ):
+        raise ValueError("whale_threshold must be a positive integer")
 
 
 @dataclass(frozen=True, slots=True)
@@ -25,6 +35,7 @@ def render_dashboard(
     state: DashboardState, whale_threshold: int = 1_000
 ) -> list[tuple[str, bool]]:
     """Render dashboard lines and indicate whether each line highlights a whale."""
+    _validate_whale_threshold(whale_threshold)
     lines = [
         ("ChronosMatch | price-time matching | Ctrl-C to exit", False),
         (
@@ -44,12 +55,14 @@ def render_dashboard(
     lines.extend((f"  {price:.4f}  {quantity}", False) for price, quantity in state.asks)
     lines.extend([("", False), ("Recent trades", False)])
     for trade in state.recent_trades[-5:]:
-        is_whale = trade.quantity >= whale_threshold
+        order_quantity = trade.aggressor_order_quantity or trade.quantity
+        is_whale = order_quantity >= whale_threshold
         label = " WHALE" if is_whale else ""
         lines.append(
             (
                 f"  #{trade.trade_id} {trade.buy_order_id}/{trade.sell_order_id} "
-                f"{trade.quantity} @ {trade.price:.4f}{label}",
+                f"{trade.quantity} @ {trade.price:.4f}"
+                f"{f' (order {order_quantity})' if is_whale else ''}{label}",
                 is_whale,
             )
         )
@@ -62,8 +75,14 @@ def run_curses_dashboard(
     refresh_seconds: float = 0.1,
     whale_threshold: int = 1_000,
 ) -> None:
-    if refresh_seconds <= 0:
-        raise ValueError("refresh_seconds must be positive")
+    if (
+        isinstance(refresh_seconds, bool)
+        or not isinstance(refresh_seconds, (int, float))
+        or not math.isfinite(refresh_seconds)
+        or refresh_seconds <= 0
+    ):
+        raise ValueError("refresh_seconds must be a positive finite number")
+    _validate_whale_threshold(whale_threshold)
     try:
         import curses
     except ImportError as exc:

@@ -13,7 +13,8 @@ sub-50-microsecond execution guarantee is made.
 ## Architecture
 
 - `chronosmatch/matching_engine.py` matches marketable orders at the resting
-  order price. Same-price orders follow arrival order.
+  order price. Same-price orders follow arrival order. Order IDs are unique for
+  the lifetime of a matching-engine instance, including after fills/cancels.
 - `chronosmatch/ipc.py` stores orders in a bounded mmap ring using fixed-width
   binary records. Processes must receive the same `multiprocessing.Lock`.
   Orders travel through mmap rather than being serialized through a queue.
@@ -94,5 +95,7 @@ Install the terminal dashboard dependency with
 python -m chronosmatch pipeline --count 10000 --dashboard
 ```
 
-Press `q` to close the dashboard. Large trades are highlighted using the
-default quantity threshold of 1,000; change it with `--whale-threshold`.
+Press `q` to close the dashboard. Incoming orders at or above the default
+quantity threshold of 1,000 are highlighted, including orders split into
+multiple fills across price levels. Change the threshold with
+`--whale-threshold`.

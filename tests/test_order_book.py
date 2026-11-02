@@ -1,3 +1,5 @@
+import pytest
+
 from chronosmatch import Order, OrderBook
 
 
@@ -38,3 +40,16 @@ def test_snapshot_aggregates_levels():
     b.add(Order("B1", "BUY", 100, 5)); b.add(Order("B2", "BUY", 100, 3))
     b.add(Order("B3", "BUY", 99, 2))
     assert b.snapshot()["bids"] == [(100, 8), (99, 2)]
+
+
+@pytest.mark.parametrize("depth", [-1, 1.5, True])
+def test_snapshot_rejects_invalid_depth(depth):
+    with pytest.raises(ValueError, match="depth must be a non-negative integer"):
+        OrderBook().snapshot(depth)
+
+
+def test_snapshot_allows_zero_depth():
+    book = OrderBook()
+    book.add(Order("B", "BUY", 100, 5))
+    book.add(Order("S", "SELL", 101, 5))
+    assert book.snapshot(0) == {"bids": [], "asks": []}
