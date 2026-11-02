@@ -6,7 +6,7 @@ import pytest
 from chronosmatch.ipc import IpcOrder, MmapRingBuffer
 from chronosmatch.ipc_audit import run_ipc_audit
 from chronosmatch.market import stream_websocket
-from chronosmatch.orders import Side
+from chronosmatch.orders import OrderType, Side
 
 
 def test_ring_buffer_round_trip_and_wraparound(tmp_path):
@@ -14,8 +14,10 @@ def test_ring_buffer_round_trip_and_wraparound(tmp_path):
     path = tmp_path / "orders.mmap"
     writer = MmapRingBuffer.create(path, 2, lock)
     reader = MmapRingBuffer(path, 2, lock)
-    first = IpcOrder(1, Side.BUY, 100.25, 4, 123)
-    second = IpcOrder(2, Side.SELL, 100.5, 5, 456)
+    first = IpcOrder(1, Side.BUY, 100.25, 4, 123, "AAPL")
+    second = IpcOrder(
+        2, Side.SELL, None, 5, 456, "MSFT", OrderType.MARKET
+    )
     third = IpcOrder(3, Side.BUY, 100.75, 6, 789)
 
     try:
@@ -54,6 +56,17 @@ def test_ring_batch_write_validates_before_writing(tmp_path):
 def test_ipc_order_rejects_invalid_fields(values):
     with pytest.raises(ValueError):
         IpcOrder(*values)
+
+
+def test_ipc_market_order_round_trips_symbol_and_type(tmp_path):
+    lock = multiprocessing.get_context("spawn").Lock()
+    ring = MmapRingBuffer.create(tmp_path / "market.mmap", 1, lock)
+    order = IpcOrder(42, Side.SELL, None, 7, 99, "TSLA", OrderType.MARKET)
+    try:
+        assert ring.put(order)
+        assert ring.get() == order
+    finally:
+        ring.close()
 
 
 def test_ring_buffer_rejects_wrong_capacity(tmp_path):

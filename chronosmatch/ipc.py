@@ -9,24 +9,28 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Optional, Sequence
 
-from .orders import Side
+from .orders import OrderType, Side, normalize_symbol
 
 
 _MAGIC = b"CHRONOS1"
-_VERSION = 1
+_VERSION = 2
 _HEADER = struct.Struct("<8sIIIII")
-_RECORD = struct.Struct("<QdIB3xQ")
+_RECORD = struct.Struct("<QdIB3xQ16sB7x")
 _SIDE_TO_CODE = {Side.BUY: 1, Side.SELL: 2}
 _CODE_TO_SIDE = {value: key for key, value in _SIDE_TO_CODE.items()}
+_TYPE_TO_CODE = {OrderType.LIMIT: 1, OrderType.MARKET: 2}
+_CODE_TO_TYPE = {value: key for key, value in _TYPE_TO_CODE.items()}
 
 
 @dataclass(frozen=True, slots=True)
 class IpcOrder:
     order_id: int
     side: Side
-    price: float
+    price: float | None
     quantity: int
     timestamp_ns: int
+    symbol: str = "DEFAULT"
+    order_type: OrderType = OrderType.LIMIT
 
     def __post_init__(self) -> None:
         if (
@@ -41,16 +45,32 @@ class IpcOrder:
             except ValueError:
                 raise ValueError("side must be BUY or SELL") from None
         try:
-            price_is_finite = math.isfinite(self.price)
-        except (OverflowError, TypeError):
-            price_is_finite = False
-        if (
-            isinstance(self.price, bool)
-            or not isinstance(self.price, (int, float))
-            or not price_is_finite
-            or self.price <= 0
-        ):
-            raise ValueError("price must be a positive finite number")
+            order_type = (
+                self.order_type
+                if isinstance(self.order_type, OrderType)
+                else OrderType(str(self.order_type).upper())
+            )
+        except ValueError:
+            raise ValueError("order_type must be LIMIT or MARKET") from None
+        object.__setattr__(self, "order_type", order_type)
+        try:
+            object.__setattr__(self, "symbol", normalize_symbol(self.symbol))
+        except ValueError as exc:
+            raise ValueError(str(exc)) from None
+        if order_type is OrderType.LIMIT:
+            try:
+                price_is_finite = math.isfinite(self.price)
+            except (OverflowError, TypeError):
+                price_is_finite = False
+            if (
+                isinstance(self.price, bool)
+                or not isinstance(self.price, (int, float))
+                or not price_is_finite
+                or self.price <= 0
+            ):
+                raise ValueError("limit price must be a positive finite number")
+        elif self.price is not None:
+            raise ValueError("market orders must not specify a price")
         if (
             isinstance(self.quantity, bool)
             or not isinstance(self.quantity, int)
@@ -151,10 +171,12 @@ class MmapRingBuffer:
                     self._map,
                     offset,
                     order.order_id,
-                    order.price,
+                    order.price or 0.0,
                     order.quantity,
                     _SIDE_TO_CODE[order.side],
                     order.timestamp_ns,
+                    order.symbol.encode("ascii"),
+                    _TYPE_TO_CODE[order.order_type],
                 )
                 write_at = (write_at + 1) % capacity
             if written:
@@ -186,7 +208,15 @@ class MmapRingBuffer:
             magic, version, capacity, read_at, write_at, count = self._header()
             for _ in range(min(count, max_items)):
                 offset = _HEADER.size + read_at * _RECORD.size
-                order_id, price, quantity, side_code, timestamp_ns = (
+                (
+                    order_id,
+                    price,
+                    quantity,
+                    side_code,
+                    timestamp_ns,
+                    symbol,
+                    type_code,
+                ) = (
                     _RECORD.unpack_from(self._map, offset)
                 )
                 try:
@@ -195,8 +225,23 @@ class MmapRingBuffer:
                     raise RuntimeError(
                         "mmap ring buffer contains an invalid side code"
                     ) from None
+                try:
+                    order_type = _CODE_TO_TYPE[type_code]
+                    symbol_text = symbol.split(b"\0", 1)[0].decode("ascii")
+                except (KeyError, UnicodeDecodeError):
+                    raise RuntimeError(
+                        "mmap ring buffer contains invalid order metadata"
+                    ) from None
                 orders.append(
-                    IpcOrder(order_id, side, price, quantity, timestamp_ns)
+                    IpcOrder(
+                        order_id,
+                        side,
+                        price if order_type is OrderType.LIMIT else None,
+                        quantity,
+                        timestamp_ns,
+                        symbol_text,
+                        order_type,
+                    )
                 )
                 read_at = (read_at + 1) % capacity
             if orders:

@@ -4,10 +4,10 @@ from __future__ import annotations
 import asyncio
 import json
 import time
-from typing import Any, Optional
+from typing import Any, Optional, Sequence
 
 from .ipc import IpcOrder, MmapRingBuffer
-from .orders import Side
+from .orders import OrderType, Side
 from .simulator import generate_orders
 
 
@@ -21,6 +21,11 @@ async def run_firehose(
     ring: MmapRingBuffer,
     *,
     seed: int = 42,
+    symbols: Sequence[str] = ("DEFAULT",),
+    order_rate: float | None = None,
+    market_order_probability: float = 0.05,
+    announcement_after: int | None = None,
+    announcement_market_order_probability: float = 0.5,
 ) -> dict[str, float | int]:
     """Generate mock orders and place each fixed-size record in the mmap ring."""
     _validate_count(count)
@@ -46,7 +51,17 @@ async def run_firehose(
             offset += written
         pending.clear()
 
-    async for order in generate_orders(count, seed):
+    async for order in generate_orders(
+        count,
+        seed,
+        symbols=symbols,
+        order_rate=order_rate,
+        market_order_probability=market_order_probability,
+        announcement_after=announcement_after,
+        announcement_market_order_probability=(
+            announcement_market_order_probability
+        ),
+    ):
         pending.append(
             IpcOrder(
                 order.order_id,
@@ -54,6 +69,8 @@ async def run_firehose(
                 order.price,
                 order.quantity,
                 order.created_ns,
+                order.symbol,
+                order.order_type,
             )
         )
         if len(pending) >= 64:
@@ -63,12 +80,18 @@ async def run_firehose(
     elapsed_seconds = elapsed_ns / 1_000_000_000
     return {
         "requested": count,
+        "generated": produced,
         "produced": produced,
+        "published": produced,
+        "dropped": count - produced,
         "elapsed_seconds": elapsed_seconds,
         "throughput_orders_per_second": (
             produced / elapsed_seconds if elapsed_seconds else 0.0
         ),
         "average_enqueue_latency_us": (
+            enqueue_latency_total_ns / produced / 1000 if produced else 0.0
+        ),
+        "average_publish_latency_us": (
             enqueue_latency_total_ns / produced / 1000 if produced else 0.0
         ),
     }
@@ -101,12 +124,18 @@ async def run_websocket_firehose(
     elapsed_seconds = (time.perf_counter_ns() - started_ns) / 1_000_000_000
     return {
         "requested": count,
+        "generated": received,
         "produced": received,
+        "published": received,
+        "dropped": count - received,
         "elapsed_seconds": elapsed_seconds,
         "throughput_orders_per_second": (
             received / elapsed_seconds if elapsed_seconds else 0.0
         ),
         "average_enqueue_latency_us": (
+            enqueue_latency_total_ns / received / 1000 if received else 0.0
+        ),
+        "average_publish_latency_us": (
             enqueue_latency_total_ns / received / 1000 if received else 0.0
         ),
     }
@@ -146,9 +175,15 @@ async def _stream_websocket(
             record = IpcOrder(
                 data["order_id"],
                 Side(str(data["side"]).upper()),
-                float(data["price"]),
+                (
+                    None
+                    if str(data.get("order_type", "LIMIT")).upper() == "MARKET"
+                    else float(data["price"])
+                ),
                 data["quantity"],
                 time.perf_counter_ns(),
+                data.get("symbol", "DEFAULT"),
+                OrderType(str(data.get("order_type", "LIMIT")).upper()),
             )
             while not ring.put(record):
                 await asyncio.sleep(0)

@@ -2,6 +2,7 @@ import asyncio
 import sqlite3
 
 from chronosmatch.pipeline import run_pipeline
+from chronosmatch.dashboard import DashboardState, render_dashboard
 
 
 def test_pipeline_ingests_matches_and_persists_in_separate_process(tmp_path):
@@ -19,13 +20,20 @@ def test_pipeline_ingests_matches_and_persists_in_separate_process(tmp_path):
     ledger_path = tmp_path / "pipeline.sqlite3"
     result = asyncio.run(run())
     assert result["firehose"]["produced"] == 100
+    assert result["firehose"]["generated"] == 100
+    assert result["firehose"]["published"] == 100
+    assert result["firehose"]["dropped"] == 0
     assert result["consumed"] == 100
     assert result["latency"]["samples"] == 100
     assert result["engine_latency"]["observations"] == 100
     assert result["engine_latency"]["average_latency_us"] >= 0
+    assert result["consume_latency"]["observations"] == 100
+    assert result["gc_collections"] >= 0
     assert result["matcher_backend"] in {"python", "cython"}
     assert updates
     assert updates[-1]["engine_latency_us"] >= 0
+    dashboard_state = DashboardState(**updates[-1])
+    assert any("p50/p95/p99" in line for line, _ in render_dashboard(dashboard_state))
     assert result["processing_elapsed_seconds"] > 0
     assert result["processing_throughput_orders_per_second"] > 0
     with sqlite3.connect(ledger_path) as connection:

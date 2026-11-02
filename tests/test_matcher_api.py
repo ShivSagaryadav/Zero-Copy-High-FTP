@@ -2,7 +2,7 @@ from array import array
 
 import pytest
 
-from chronosmatch import _cython_matcher
+_cython_matcher = pytest.importorskip("chronosmatch._cython_matcher")
 
 
 @pytest.mark.parametrize(

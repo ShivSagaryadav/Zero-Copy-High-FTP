@@ -58,16 +58,22 @@ class LatencyMonitor:
         self._prune_events(now)
         samples = [latency for _, latency in self._samples]
         ordered = sorted(samples)
+        p50_index = max(0, ceil(len(ordered) * 0.50) - 1)
+        p95_index = max(0, ceil(len(ordered) * 0.95) - 1)
         p99_index = max(0, ceil(len(ordered) * 0.99) - 1)
         return {
             "samples": len(samples),
             "observations": self._observations,
             "latest_latency_us": samples[-1] / 1000 if samples else 0.0,
+            "minimum_latency_us": min(samples) / 1000 if samples else 0.0,
+            "maximum_latency_us": max(samples) / 1000 if samples else 0.0,
             "average_latency_us": (
                 self._total_latency_ns / self._observations / 1000
                 if self._observations
                 else 0.0
             ),
+            "p50_latency_us": ordered[p50_index] / 1000 if ordered else 0.0,
+            "p95_latency_us": ordered[p95_index] / 1000 if ordered else 0.0,
             "p99_latency_us": ordered[p99_index] / 1000 if ordered else 0.0,
             "throughput_orders_per_second": (
                 len(self._events) / (self.window_ns / 1_000_000_000)

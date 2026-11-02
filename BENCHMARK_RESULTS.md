@@ -1,39 +1,173 @@
-# ChronosMatch Benchmark Results
+# ChronosMatch Daily Git and File Updates
 
-These are local prototype measurements, not latency or throughput guarantees.
-Repeat the tests on the target machine with `python benchmark.py` and
-`python -m chronosmatch ipc-audit --count 1000000`.
+Reporting period: 15-10-2026 to 02-11-2026
+**Project:** ChronosMatch - Zero-Copy High-Frequency Trading Engine
 
-## Mmap IPC audit
+## Evidence and date policy
 
-| Date | Records | Result | Throughput |
-|---|---:|---|---:|
-| 2026-10-27 | 1,000,000 | All records consumed; checksum matched | 186,944 records/s total |
-| 2026-10-27 | 1,000,000 | Async producer enqueue rate | 187,680 records/s |
+This update is based on the active repository's Git history and current
+worktree. The Git history inspected contains commits dated **25-10-2026 through
+02-11-2026**; it has no commit records for 15-10-2026 through 24-10-2026.
+Those earlier dates are explicitly marked as having no Git evidence rather
+than being filled with guessed work. A commit date records when Git recorded a
+change; it does not independently prove when every underlying task was done.
 
-This two-process test transfers fixed-size mmap records; it does not pickle
-orders. The measured IPC rate exceeded the 100,000-records/s firehose target on
-the development machine.
+## Week 1 — 15-10-2026 to 18-10-2026
 
-## End-to-end pipeline
+| Date | Git/file-based daily update |
+|---|---|
+| Thu, 15-10-2026 | No matching project commit or dated file-change evidence found in the inspected repository history. |
+| Fri, 16-10-2026 | No matching project commit or dated file-change evidence found in the inspected repository history. |
+| Sat, 17-10-2026 | No matching project commit or dated file-change evidence found in the inspected repository history. |
+| Sun, 18-10-2026 | No matching project commit or dated file-change evidence found in the inspected repository history. |
 
-Run `python benchmark.py --count 10000 --runs 5` to measure the complete
-firehose, mmap, matching, and SQLite path. The script reports throughput,
-end-to-end latency, p99 latency, and in-engine latency for the active matcher.
-Latency is reported from local `perf_counter_ns()` measurements.
+## Week 2 — 19-10-2026 to 25-10-2026
 
-One 10,000-order end-to-end run on the development machine reported 31,692
-orders/s total processing throughput, 13,734 microseconds average and 23,129
-microseconds p99 end-to-end latency. The in-engine measurement was 4.88
-microseconds average and 19.30 microseconds p99. These figures vary by run and
-machine; they are not production guarantees.
+| Date | Git evidence | Files and recorded work |
+|---|---|---|
+| Mon, 19-10-2026 | No matching project commit found. | No dated file changes can be attributed to this day from the available Git history. |
+| Tue, 20-10-2026 | No matching project commit found. | No dated file changes can be attributed to this day from the available Git history. |
+| Wed, 21-10-2026 | No matching project commit found. | No dated file changes can be attributed to this day from the available Git history. |
+| Thu, 22-10-2026 | No matching project commit found. | No dated file changes can be attributed to this day from the available Git history. |
+| Fri, 23-10-2026 | No matching project commit found. | No dated file changes can be attributed to this day from the available Git history. |
+| Sat, 24-10-2026 | No matching project commit found. | No dated file changes can be attributed to this day from the available Git history. |
+| Sun, 25-10-2026 | `1b8a94b` (uploaded existing matching-engine files; merge `25e229c`). | Existing nested project files: `matching-engine/README.md`, `matching-engine/requirements.txt`, `matching-engine/pytest.ini`, `matching-engine/chronosmatch/__init__.py`, `__main__.py`, `matching_engine.py`, `order_book.py`, `orders.py`, `matching-engine/tests/__init__.py`, `test_matching.py`, and `test_order_book.py`. Git also recorded generated Python bytecode in nested `__pycache__` directories. |
 
-The Python matcher was measured because the development machine does not have
-Microsoft C++ Build Tools. Cython source translation passed, but building the
-native extension requires the compiler documented in the README.
+## Week 3 — 26-10-2026 to 01-11-2026
 
-## Validation
+| Date | Git evidence | Files and recorded work |
+|---|---|---|
+| Mon, 26-10-2026 | `3ee94aa`, `318945a`. | Matching engine and order-book baseline: `chronosmatch/__init__.py`, `__main__.py`, `matching_engine.py`, `order_book.py`, `orders.py`, `requirements.txt`, `tests/__init__.py`, `tests/test_matching.py`, `tests/test_order_book.py`. Async simulator and benchmark baseline: `BENCHMARK_RESULTS.md`, `benchmark.py`, `order_simulator.py`, `tests/test_order_simulator.py`. |
+| Tue, 27-10-2026 | `a7ad3e9`, `9ed600c`, `5bbbb61`, `b824e64`, `8c737aa`, `3c024a4`, `2c552d9`. | Duplicate-ID and test-discovery fixes; simulator validation; complete pipeline integration and Cython task. Recorded paths: `.gitignore`, `.vscode/tasks.json`, `BENCHMARK_RESULTS.md`, `README.md`, `benchmark.py`, `order_simulator.py`, `pytest.ini`, `requirements-cython.txt`, `requirements-dashboard.txt`, `requirements-websocket.txt`, `setup_cython.py`; `chronosmatch/__init__.py`, `__main__.py`, `_cython_matcher.pyx`, `_matcher.py`, `_python_matcher.py`, `dashboard.py`, `ipc.py`, `ipc_audit.py`, `ledger.py`, `market.py`, `matching_engine.py`, `metrics.py`, `orders.py`, `pipeline.py`, `simulator.py`; `tests/__init__.py`, `test_dashboard.py`, `test_ipc.py`, `test_market_websocket.py`, `test_matcher_api.py`, `test_matching.py`, `test_metrics_ledger.py`, `test_order_book.py`, `test_order_simulator.py`, `test_orders.py`, `test_pipeline.py`; plus nested `matching-engine/pytest.ini`, `matching-engine/tests/__init__.py`, `matching-engine/chronosmatch/matching_engine.py`, and `matching-engine/tests/test_matching.py`. Git also recorded generated bytecode files. |
+| Wed, 28-10-2026 | `9919328`, `ce5888a`. | Cython build-task paths and dashboard-setting validation: `.vscode/tasks.json`, `chronosmatch/_cython_matcher.pyi`, `chronosmatch/dashboard.py`, `tests/test_dashboard.py`, `tests/test_matcher_api.py`. |
+| Thu, 29-10-2026 | `e65efb0`; merge `5d22a74`; `41a70b4`. | Split-fill whale highlighting and generated-build ignore rules: `README.md`, `.gitignore`, `chronosmatch/dashboard.py`, `chronosmatch/ledger.py`, `chronosmatch/matching_engine.py`, `tests/test_dashboard.py`, `tests/test_metrics_ledger.py`. |
+| Fri, 30-10-2026 | `e72f172`; merge `6ac3801`. | Order-book snapshot-depth validation: `chronosmatch/order_book.py`, `tests/test_order_book.py`. |
+| Sat, 31-10-2026 | `b911fb6`; merge `c1eeb46`. | Reject order-ID reuse over engine lifetime: `README.md`, `chronosmatch/matching_engine.py`, `tests/test_matching.py`. |
+| Sun, 01-11-2026 | `c6a63fb`; merge `3b04566`. | Commit message records a matching-engine branch update. The commit summary provides no changed-file list, so no individual file changes are attributed to this date here. |
 
-- Root project tests: 40 passed (plus 6 parameterized input cases).
-- End-to-end pipeline test: generated orders were consumed in another process
-  and matched trades were written to SQLite.
+## Week 4 — 02-11-2026
+
+| Date | Git evidence | Files and recorded work |
+|---|---|---|
+| Mon, 02-11-2026 | Commits `abbc978`, `d70c96d`, `0e852e0`; additional uncommitted changes listed below. | `abbc978` validates finite prices in `orders.py` and `test_orders.py`. `d70c96d` merges the integrated ChronosMatch implementation and records the project files listed in the 27-10 entry, along with `async_simulator.py`, `ring_buffer.py`, and `test_ring_buffer.py`. `0e852e0` records changes to `README.md`, `chronosmatch/dashboard.py`, `ledger.py`, `matching_engine.py`, `order_book.py`, `tests/test_dashboard.py`, `test_matching.py`, `test_metrics_ledger.py`, and `test_order_book.py`. The current worktree has further edited and added files; see the complete inventory below. |
+
+## Complete current worktree file inventory (02-11-2026)
+
+The following paths are modified but not committed in the current worktree:
+
+```text
+BENCHMARK_RESULTS.md
+README.md
+benchmark.py
+chronosmatch/__init__.py
+chronosmatch/__main__.py
+chronosmatch/dashboard.py
+chronosmatch/ipc.py
+chronosmatch/ledger.py
+chronosmatch/market.py
+chronosmatch/matching_engine.py
+chronosmatch/metrics.py
+chronosmatch/orders.py
+chronosmatch/pipeline.py
+chronosmatch/simulator.py
+tests/test_dashboard.py
+tests/test_ipc.py
+tests/test_matcher_api.py
+tests/test_matching.py
+tests/test_metrics_ledger.py
+tests/test_order_simulator.py
+tests/test_pipeline.py
+```
+
+New, untracked documentation files:
+
+```text
+PROJECT_WORKFLOW.md
+TODO.md
+```
+
+Generated build outputs and caches are not included in this worktree source
+inventory. Use `git status --short` to refresh this list after further edits.
+
+## Verified project results (02-11-2026)
+
+These are actual results from the current Windows machine, Python 3.14.8, and
+the compiled Cython backend. Percentiles use up to the monitor's most recent
+10,000 samples. Results vary by machine and load.
+
+### Build and tests
+
+```powershell
+python setup_cython.py build_ext --inplace --force
+python -m pytest -q
+```
+
+- Fresh MSVC/Cython extension build: **passed**; Cython backend selected.
+- Full suite: **69 passed, 6 subtests passed**.
+- Dashboard refresh and rendering are covered by automated tests; an
+  interactive terminal session was not separately verified.
+
+### One-million-record mmap audit
+
+Command: `python -m chronosmatch ipc-audit --count 1000000 --timeout 600`
+
+| Metric | Measured result |
+|---|---:|
+| Records requested and consumed | 1,000,000 |
+| Order ID checksum | 500,000,500,000 (matched expected sum) |
+| Producer-consumer throughput | 62,393 records/s |
+| Producer publish throughput | 62,810 records/s |
+| Average publish latency | 578.03 us |
+| Dropped orders | 0 |
+
+### 100,000-order end-to-end benchmark
+
+Command: `python benchmark.py --count 100000 --runs 1`
+
+| Metric | Measured result |
+|---|---:|
+| Processing throughput | 18,899.60 orders/s |
+| End-to-end average latency | 55,235.11 us |
+| End-to-end p50 / p95 / p99 | 73,815.80 / 209,059.40 / 219,739.90 us |
+| End-to-end minimum / maximum | 42,332.20 / 220,758.90 us |
+| Matching-engine average latency | 14.44 us |
+| Matching-engine p50 / p95 / p99 | 10.20 / 40.20 / 61.50 us |
+| Matching-engine minimum / maximum | 3.70 / 8,019.90 us |
+
+The average engine latency was below the 50-us goal in this run, but engine
+p99 was above it. The end-to-end goal of less than 1 ms was **not achieved**;
+IPC/consumer wait accounted for most of the measured delay.
+
+### Python/Cython matching-kernel microbenchmark
+
+100,000 invocations of the same four-level fill workload:
+
+| Kernel | Calls/s | Elapsed |
+|---|---:|---:|
+| Pure Python | 1,386,952.93 | 0.072 s |
+| Cython | 1,647,226.65 | 0.061 s |
+
+This is a kernel microbenchmark, not an end-to-end speedup claim.
+
+### Integrated pipeline and SQLite
+
+A 2,000-order, two-symbol run enabled the simulated announcement burst at order
+1,000:
+
+- Generated, published, and consumed: **2,000 orders**.
+- Dropped: **0 orders**.
+- Trades persisted: **1,878**.
+- Executed quantity persisted: **48,925 units** across `AAPL` and `MSFT`.
+- Active matcher: **Cython**.
+
+## Reproduce the verified checks
+
+Run from the existing ChronosMatch project directory:
+
+```powershell
+python setup_cython.py build_ext --inplace --force
+python -m pytest -q
+python -m chronosmatch ipc-audit --count 1000000 --timeout 600
+python benchmark.py --count 100000 --runs 1
+python -m chronosmatch pipeline --count 2000 --symbols AAPL,MSFT --announcement-after 1000 --announcement-market-order-probability 0.5 --ledger .\chronosmatch_trades.sqlite3
+```

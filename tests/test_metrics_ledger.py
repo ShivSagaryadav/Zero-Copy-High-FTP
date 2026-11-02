@@ -16,6 +16,10 @@ def test_latency_monitor_tracks_window_and_percentiles():
     assert snapshot["samples"] == 2
     assert snapshot["latest_latency_us"] == 0.2
     assert snapshot["p99_latency_us"] == 0.2
+    assert snapshot["p50_latency_us"] == 0.05
+    assert snapshot["p95_latency_us"] == 0.2
+    assert snapshot["minimum_latency_us"] == 0.05
+    assert snapshot["maximum_latency_us"] == 0.2
     assert snapshot["throughput_orders_per_second"] == 2
 
 
@@ -47,6 +51,9 @@ def test_async_ledger_flushes_matched_trades(tmp_path):
                 """
             ).fetchone()
         assert row == ("B", "S", 3, 3)
+        assert ledger.total_executed_volume() == 3
+        assert ledger.trade_history(symbol="DEFAULT")[0]["quantity"] == 3
+        assert ledger.trade_history(symbol="MISSING") == []
 
     asyncio.run(verify())
 

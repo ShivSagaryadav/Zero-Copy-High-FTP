@@ -40,6 +40,13 @@ def _parser() -> argparse.ArgumentParser:
     pipeline.add_argument("--ledger", default="chronosmatch_trades.sqlite3")
     pipeline.add_argument("--ipc-file")
     pipeline.add_argument("--websocket-url")
+    pipeline.add_argument("--symbols", default="DEFAULT")
+    pipeline.add_argument("--rate", type=float)
+    pipeline.add_argument("--market-order-probability", type=float, default=0.05)
+    pipeline.add_argument("--announcement-after", type=int)
+    pipeline.add_argument(
+        "--announcement-market-order-probability", type=float, default=0.5
+    )
     pipeline.add_argument("--dashboard", action="store_true")
     pipeline.add_argument("--whale-threshold", type=int, default=1_000)
 
@@ -67,6 +74,17 @@ async def _run_pipeline(args: argparse.Namespace) -> None:
             ledger_path=args.ledger,
             ipc_path=args.ipc_file,
             websocket_url=args.websocket_url,
+            symbols=tuple(
+                symbol.strip()
+                for symbol in args.symbols.split(",")
+                if symbol.strip()
+            ),
+            order_rate=args.rate,
+            market_order_probability=args.market_order_probability,
+            announcement_after=args.announcement_after,
+            announcement_market_order_probability=(
+                args.announcement_market_order_probability
+            ),
             on_state=update_state,
         )
     )

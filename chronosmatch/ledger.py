@@ -24,7 +24,9 @@ class AsyncTradeLedger:
         self.path = Path(path)
         self.batch_size = batch_size
         self.run_id = uuid.uuid4().hex
-        self._queue: asyncio.Queue[Trade | object] = asyncio.Queue()
+        self._queue: asyncio.Queue[Trade | object] = asyncio.Queue(
+            maxsize=batch_size * 10
+        )
         self._worker: Optional[asyncio.Task[None]] = None
         self._error: Optional[Exception] = None
 
@@ -91,6 +93,7 @@ class AsyncTradeLedger:
                 CREATE TABLE IF NOT EXISTS trades (
                     run_id TEXT NOT NULL,
                     trade_id INTEGER NOT NULL,
+                    symbol TEXT NOT NULL DEFAULT 'DEFAULT',
                     buy_order_id TEXT NOT NULL,
                     sell_order_id TEXT NOT NULL,
                     price REAL NOT NULL,
@@ -114,12 +117,29 @@ class AsyncTradeLedger:
                     ADD COLUMN aggressor_order_quantity INTEGER NOT NULL DEFAULT 0
                     """
                 )
+            if "symbol" not in columns:
+                connection.execute(
+                    "ALTER TABLE trades ADD COLUMN symbol TEXT NOT NULL DEFAULT 'DEFAULT'"
+                )
+            connection.execute(
+                "CREATE INDEX IF NOT EXISTS idx_trades_symbol_timestamp "
+                "ON trades(symbol, timestamp DESC)"
+            )
+            connection.execute(
+                "CREATE INDEX IF NOT EXISTS idx_trades_buy_order "
+                "ON trades(buy_order_id)"
+            )
+            connection.execute(
+                "CREATE INDEX IF NOT EXISTS idx_trades_sell_order "
+                "ON trades(sell_order_id)"
+            )
 
     def _insert_batch(self, batch: list[Trade]) -> None:
         rows = [
             (
                 self.run_id,
                 trade.trade_id,
+                trade.symbol,
                 trade.buy_order_id,
                 trade.sell_order_id,
                 trade.price,
@@ -136,10 +156,35 @@ class AsyncTradeLedger:
             connection.executemany(
                 """
                 INSERT INTO trades (
-                    run_id, trade_id, buy_order_id, sell_order_id,
+                    run_id, trade_id, symbol, buy_order_id, sell_order_id,
                     price, quantity, value, timestamp, latency_ns,
                     end_to_end_latency_ns, aggressor_order_quantity
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 rows,
             )
+
+    def trade_history(
+        self, *, symbol: str | None = None, limit: int = 100
+    ) -> list[dict[str, object]]:
+        if isinstance(limit, bool) or not isinstance(limit, int) or limit <= 0:
+            raise ValueError("limit must be a positive integer")
+        query = "SELECT * FROM trades"
+        parameters: tuple[object, ...] = ()
+        if symbol is not None:
+            query += " WHERE symbol = ?"
+            parameters = (symbol.upper(),)
+        query += " ORDER BY timestamp DESC, trade_id DESC LIMIT ?"
+        parameters += (limit,)
+        with sqlite3.connect(self.path) as connection:
+            connection.row_factory = sqlite3.Row
+            return [dict(row) for row in connection.execute(query, parameters)]
+
+    def total_executed_volume(self, *, symbol: str | None = None) -> int:
+        query = "SELECT COALESCE(SUM(quantity), 0) FROM trades"
+        parameters: tuple[str, ...] = ()
+        if symbol is not None:
+            query += " WHERE symbol = ?"
+            parameters = (symbol.upper(),)
+        with sqlite3.connect(self.path) as connection:
+            return int(connection.execute(query, parameters).fetchone()[0])

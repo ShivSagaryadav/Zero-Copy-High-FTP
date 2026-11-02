@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import asyncio
+import gc
 import math
 import multiprocessing
 import queue
@@ -22,21 +23,36 @@ def _publish_state(
     engine: MatchingEngine,
     latency: LatencyMonitor,
     engine_latency: LatencyMonitor,
+    consume_latency: LatencyMonitor,
+    symbol: str,
+    gc_baseline: int,
 ) -> None:
     metrics = latency.snapshot()
     engine_metrics = engine_latency.snapshot()
-    snapshot = engine.book.snapshot()
+    consume_metrics = consume_latency.snapshot()
+    snapshot = engine.book_for(symbol).snapshot()
     state = {
+        "symbol": symbol,
         "bids": snapshot["bids"],
         "asks": snapshot["asks"],
-        "spread": engine.book.spread(),
+        "spread": engine.book_for(symbol).spread(),
         "latest_latency_us": metrics["latest_latency_us"],
+        "p50_latency_us": metrics["p50_latency_us"],
+        "p95_latency_us": metrics["p95_latency_us"],
         "p99_latency_us": metrics["p99_latency_us"],
+        "minimum_latency_us": metrics["minimum_latency_us"],
+        "maximum_latency_us": metrics["maximum_latency_us"],
         "throughput_orders_per_second": metrics[
             "throughput_orders_per_second"
         ],
         "engine_latency_us": engine_metrics["latest_latency_us"],
+        "engine_p50_latency_us": engine_metrics["p50_latency_us"],
+        "engine_p95_latency_us": engine_metrics["p95_latency_us"],
         "engine_p99_latency_us": engine_metrics["p99_latency_us"],
+        "ipc_consumption_latency_us": consume_metrics["latest_latency_us"],
+        "gc_collections": sum(
+            item["collections"] for item in gc.get_stats()
+        ) - gc_baseline,
         "recent_trades": engine.trades[-5:],
     }
     try:
@@ -62,8 +78,11 @@ async def _matching_worker(
     engine = MatchingEngine()
     latency = LatencyMonitor()
     engine_latency = LatencyMonitor()
+    consume_latency = LatencyMonitor()
     ledger = AsyncTradeLedger(ledger_path)
     await ledger.start()
+    gc_baseline = sum(item["collections"] for item in gc.get_stats())
+    active_symbol = "DEFAULT"
     consumed = 0
     last_update_ns = 0
     try:
@@ -80,27 +99,41 @@ async def _matching_worker(
                         record.side,
                         record.price,
                         record.quantity,
+                        symbol=record.symbol,
+                        order_type=record.order_type,
                     )
                     order.created_ns = record.timestamp_ns
                     engine_started_ns = time.perf_counter_ns()
+                    consume_latency.record(record.timestamp_ns, engine_started_ns)
                     trades = engine.submit(order)
                     engine_finished_ns = time.perf_counter_ns()
                     latency.record(record.timestamp_ns, engine_finished_ns)
                     engine_latency.record(engine_started_ns, engine_finished_ns)
                     await ledger.append(trades)
                     consumed += 1
+                    active_symbol = record.symbol
                     now_ns = time.perf_counter_ns()
                     if now_ns - last_update_ns >= 100_000_000:
-                        _publish_state(updates, engine, latency, engine_latency)
+                        _publish_state(
+                            updates, engine, latency, engine_latency,
+                            consume_latency, active_symbol, gc_baseline,
+                        )
                         last_update_ns = now_ns
         await ledger.close()
-        _publish_state(updates, engine, latency, engine_latency)
+        _publish_state(
+            updates, engine, latency, engine_latency,
+            consume_latency, active_symbol, gc_baseline,
+        )
         results.put(
             {
                 "consumed": consumed,
                 "trade_count": len(engine.trades),
                 "latency": latency.snapshot(),
                 "engine_latency": engine_latency.snapshot(),
+                "consume_latency": consume_latency.snapshot(),
+                "gc_collections": sum(
+                    item["collections"] for item in gc.get_stats()
+                ) - gc_baseline,
                 "matcher_backend": engine.matcher_backend,
             }
         )
@@ -138,6 +171,9 @@ async def run_pipeline(
     ledger_path: str | Path = "chronosmatch_trades.sqlite3",
     ipc_path: str | Path | None = None,
     websocket_url: Optional[str] = None,
+    symbols: tuple[str, ...] = ("DEFAULT",),
+    order_rate: float | None = None,
+    market_order_probability: float = 0.05,
     process_timeout: float = 60.0,
     on_state: Optional[Callable[[dict], None]] = None,
 ) -> dict:
@@ -201,7 +237,14 @@ async def run_pipeline(
         processing_started_ns = time.perf_counter_ns()
         if websocket_url is None:
             firehose_task = asyncio.create_task(
-                run_firehose(count, ring, seed=seed)
+                run_firehose(
+                    count,
+                    ring,
+                    seed=seed,
+                    symbols=symbols,
+                    order_rate=order_rate,
+                    market_order_probability=market_order_probability,
+                )
             )
         else:
             firehose_task = asyncio.create_task(
