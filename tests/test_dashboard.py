@@ -1,3 +1,6 @@
+import sys
+from types import SimpleNamespace
+
 import pytest
 
 from chronosmatch.dashboard import DashboardState, render_dashboard
@@ -23,6 +26,53 @@ def test_dashboard_formats_book_metrics_and_highlights_whale_trade():
     assert len(trade_lines) == 1
     assert "WHALE" in trade_lines[0]
     assert any("Spread: 0.5" in line for line, _ in lines)
+
+
+def test_curses_dashboard_refreshes_live_state_and_quits(monkeypatch):
+    class Screen:
+        def __init__(self):
+            self.frames = []
+            self.current = []
+            self.key_reads = 0
+
+        def timeout(self, _milliseconds):
+            pass
+
+        def erase(self):
+            self.current = []
+
+        def getmaxyx(self):
+            return 20, 120
+
+        def addnstr(self, _row, _column, text, _width):
+            self.current.append(text)
+
+        def refresh(self):
+            self.frames.append(tuple(self.current))
+
+        def getch(self):
+            self.key_reads += 1
+            return -1 if self.key_reads == 1 else ord("q")
+
+    screen = Screen()
+    curses = SimpleNamespace(
+        curs_set=lambda _visibility: None,
+        has_colors=lambda: False,
+        wrapper=lambda draw: draw(screen),
+    )
+    monkeypatch.setitem(sys.modules, "curses", curses)
+    states = iter(
+        [
+            DashboardState([], [], None, 1, 2, 3, []),
+            DashboardState([], [], None, 4, 5, 6, []),
+        ]
+    )
+
+    run_curses_dashboard(lambda: next(states))
+
+    assert len(screen.frames) == 2
+    assert any("Latest: 1.00 us" in line for line in screen.frames[0])
+    assert any("Latest: 4.00 us" in line for line in screen.frames[1])
 
 
 def test_dashboard_highlights_whale_order_split_across_price_levels():

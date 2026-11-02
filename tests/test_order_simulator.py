@@ -2,6 +2,7 @@
 import unittest
 
 from order_simulator import generate_orders, run_simulation
+from chronosmatch.orders import OrderType
 
 
 class TestOrderSimulator(unittest.IsolatedAsyncioTestCase):
@@ -41,6 +42,38 @@ class TestOrderSimulator(unittest.IsolatedAsyncioTestCase):
         ]
 
         self.assertEqual(first_values, second_values)
+
+    async def test_generator_supports_market_orders_and_multiple_symbols(self):
+        orders = [
+            order
+            async for order in generate_orders(
+                20,
+                seed=1,
+                symbols=("AAPL", "MSFT"),
+                market_order_probability=1.0,
+            )
+        ]
+        self.assertTrue(all(order.order_type is OrderType.MARKET for order in orders))
+        self.assertTrue(all(order.price is None for order in orders))
+        self.assertEqual({order.symbol for order in orders}, {"AAPL", "MSFT"})
+
+    async def test_generator_simulates_post_announcement_market_order_burst(self):
+        orders = [
+            order
+            async for order in generate_orders(
+                20,
+                seed=2,
+                market_order_probability=0.0,
+                announcement_after=11,
+                announcement_market_order_probability=1.0,
+            )
+        ]
+        self.assertTrue(
+            all(order.order_type is OrderType.LIMIT for order in orders[:10])
+        )
+        self.assertTrue(
+            all(order.order_type is OrderType.MARKET for order in orders[10:])
+        )
 
     async def test_simulation_consumes_all_orders(self):
         result = await run_simulation(count=500, seed=42)

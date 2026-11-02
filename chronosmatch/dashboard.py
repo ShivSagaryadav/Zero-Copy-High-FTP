@@ -28,7 +28,16 @@ class DashboardState:
     throughput_orders_per_second: float
     recent_trades: list[Trade]
     engine_latency_us: float = 0.0
+    p50_latency_us: float = 0.0
+    p95_latency_us: float = 0.0
+    minimum_latency_us: float = 0.0
+    maximum_latency_us: float = 0.0
     engine_p99_latency_us: float = 0.0
+    engine_p50_latency_us: float = 0.0
+    engine_p95_latency_us: float = 0.0
+    ipc_consumption_latency_us: float = 0.0
+    gc_collections: int = 0
+    symbol: str = "DEFAULT"
 
 
 def render_dashboard(
@@ -37,13 +46,22 @@ def render_dashboard(
     """Render dashboard lines and indicate whether each line highlights a whale."""
     _validate_whale_threshold(whale_threshold)
     lines = [
-        ("ChronosMatch | price-time matching | Ctrl-C to exit", False),
+        (
+            f"ChronosMatch | {state.symbol} | price-time matching | Ctrl-C to exit",
+            False,
+        ),
         (
             f"Spread: {state.spread if state.spread is not None else 'n/a'}"
             f" | Latest: {state.latest_latency_us:.2f} us"
-            f" | p99: {state.p99_latency_us:.2f} us"
+            f" | p50/p95/p99: {state.p50_latency_us:.2f}/"
+            f"{state.p95_latency_us:.2f}/{state.p99_latency_us:.2f} us"
+            f" | min/max: {state.minimum_latency_us:.2f}/"
+            f"{state.maximum_latency_us:.2f} us"
             f" | engine: {state.engine_latency_us:.2f} us"
-            f" (p99 {state.engine_p99_latency_us:.2f} us)"
+            f" (p50/p95/p99 {state.engine_p50_latency_us:.2f}/"
+            f"{state.engine_p95_latency_us:.2f}/{state.engine_p99_latency_us:.2f} us)"
+            f" | IPC wait: {state.ipc_consumption_latency_us:.2f} us"
+            f" | GC: {state.gc_collections}"
             f" | Throughput: {state.throughput_orders_per_second:.0f} orders/s",
             False,
         ),
