@@ -2,7 +2,7 @@
 
 ## Date range and reporting rule
 
-- Requested range: **15-10-2026 through 02-11-2026** (current date).
+- Requested range: **15-10-2026 through -** (current date).
 - The request also mentions **12-10-2026**, but gives **15-10-2026** as the
   starting date. This workflow uses the explicit start date, 15 October.
 - To keep the requested four week sections within the date range, Week 1 is a
